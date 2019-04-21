@@ -1,0 +1,5 @@
+2019.4.13
+1. Eth0 cannot work, although HW is OK.
+
+2019.4.21
+1. Fixed the bug that eth0 cannot work.
