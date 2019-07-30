@@ -1,4 +1,4 @@
-/*
+﻿/*
  * am335x_evm.h
  *
  * Copyright (C) 2011 Texas Instruments Incorporated - http://www.ti.com/
@@ -60,7 +60,7 @@
 	"rdaddr=0x81000000\0" \
 	"bootdir=/boot\0" \
 	"bootfile=uImage\0" \
-	"fdtfile=\0" \
+	"fdtfile=am335x-boneblack.dtb\0" \
 	"console=ttyO0,115200n8\0" \
 	"optargs=\0" \
 	"mtdids=" MTDIDS_DEFAULT "\0" \
@@ -76,6 +76,10 @@
 	"nandrootfstype=ubifs rootwait=1\0" \
 	"nandsrcaddr=0x280000\0" \
 	"nandimgsize=0x500000\0" \
+	"nandfdtaddr=0x260000\0" \
+    "nandfdtsize=0x020000\0" \
+    "nandfsaddr=0x800000\0" \
+    "nandfssize=0x1400000\0" \
 	"rootpath=/export/rootfs\0" \
 	"nfsopts=nolock\0" \
 	"static_ip=${ipaddr}:${serverip}:${gatewayip}:${netmask}:${hostname}" \
@@ -88,8 +92,7 @@
 		"rootfstype=${mmcrootfstype}\0" \
 	"nandargs=setenv bootargs console=${console} " \
 		"${optargs} " \
-		"root=${nandroot} " \
-		"rootfstype=${nandrootfstype}\0" \
+		"init=/sbin/init\0" \
 	"spiroot=/dev/mtdblock4 rw\0" \
 	"spirootfstype=jffs2\0" \
 	"spisrcaddr=0xe0000\0" \
@@ -121,7 +124,12 @@
 	"nandboot=echo Booting from nand ...; " \
 		"run nandargs; " \
 		"nand read ${loadaddr} ${nandsrcaddr} ${nandimgsize}; " \
-		"bootm ${loadaddr}\0" \
+		"gpio set 54; " \
+		"nand read ${rdaddr} ${nandfsaddr} ${nandfssize}; " \
+		"gpio set 55; " \
+		"nand read ${fdtaddr} ${nandfdtaddr} ${nandfdtsize}; " \
+		"gpio set 56; " \
+		"bootm ${loadaddr} ${rdaddr} ${fdtaddr}\0" \
 	"spiboot=echo Booting from spi ...; " \
 		"run spiargs; " \
 		"sf probe ${spibusno}:0; " \
@@ -147,30 +155,8 @@
 		"if test $board_name = A335X_SK; then " \
 			"setenv fdtfile am335x-evmsk.dtb; fi\0" \
 
-#endif
+#endif /*CONFIG_SPL_BUILD*/
 
-#if 0
-#define CONFIG_BOOTCOMMAND \
-	"run findfdt; " \
-	"mmc dev ${mmcdev}; if mmc rescan; then " \
-		"echo SD/MMC found on device ${mmcdev};" \
-		"if run loadbootenv; then " \
-			"echo Loaded environment from ${bootenv};" \
-			"run importbootenv;" \
-		"fi;" \
-		"if test -n $uenvcmd; then " \
-			"echo Running uenvcmd ...;" \
-			"run uenvcmd;" \
-		"fi;" \
-		"if run loaduimage; then " \
-			"run loadfdt;" \
-			"run mmcboot;" \
-		"fi;" \
-	"else " \
-		"run nandboot;" \
-	"fi;" \
-
-#else
 #define CONFIG_BOOTCOMMAND \
 	"gpio set 53; " \
 	"i2c mw 0x24 1 0x3e; " \
@@ -202,8 +188,7 @@
 			"run mmcboot; " \
 		"fi; " \
 	"fi; " \
-
-#endif
+    "run nandboot; " \
 
 /* Clock Defines */
 #define V_OSCK				24000000  /* Clock output from T2 */
@@ -510,8 +495,8 @@
 #define MTDPARTS_DEFAULT		"mtdparts=omap2-nand.0:128k(SPL)," \
 					"128k(SPL.backup1)," \
 					"128k(SPL.backup2)," \
-					"128k(SPL.backup3),1920k(u-boot)," \
-					"128k(u-boot-env),5m(kernel),-(rootfs)"
+					"128k(SPL.backup3),1792k(u-boot)," \
+					"128k(u-boot-env),5m(kernel),20m(rootfs), -(usrdata)"
 #define CONFIG_NAND_OMAP_GPMC
 #define GPMC_NAND_ECC_LP_x16_LAYOUT	1
 #define CONFIG_SYS_NAND_BASE		(0x08000000)	/* physical address */
